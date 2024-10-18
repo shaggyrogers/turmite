@@ -50,10 +50,11 @@ const std::string turmiteExampleRules[45] = {
 };
 
 // Constructor
-Turmite::Turmite(World *world, const std::string& rule, int x, int y, int direction)
+Turmite::Turmite(World *world, const std::string& rule, int x, int y, int direction, int stepLimit)
 {
     // Get ptr to the world and set the initial position of the turmite
     m_world = world, m_posX = x, m_posY = y, m_lastX = x, m_lastY = y, m_currentDirection = direction;
+    m_generationLimit = stepLimit;
 
     // Initialize some default values
     m_currentState = 0, m_generationCount = 0, m_isAlive = true;
@@ -143,6 +144,12 @@ void Turmite::step()
 
     // Move and update the turmite
     move();
+
+    // Die if step limit reached
+    if (m_generationLimit != -1 && m_generationCount >= m_generationLimit)
+    {
+        m_isAlive = false;
+    }
 }
 
 // Simply set the head of the turmite

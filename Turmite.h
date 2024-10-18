@@ -37,7 +37,7 @@ public:
      * @param y Position of the turmite
      * @param direction Initial facing direction (0=up, 1=right, 2=down, 3=left)
      */
-    Turmite(World *world, const std::string& rule, int x, int y, int direction = 0);
+    Turmite(World *world, const std::string& rule, int x, int y, int direction = 0, int stepLimit = -1);
 
     /**
      * @brief Delete the transition table from memory
@@ -93,6 +93,8 @@ private:
     unsigned char ***m_transitionTable;  // Actions to be taken are specified here
     World           *m_world;            // Pointer to the where the turmite is displayed
 
+    int              m_generationLimit;  // Maximum number of iterations before death.
+                                         // -1 for no limit.
 };
 
 

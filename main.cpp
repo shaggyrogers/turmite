@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <SFML/Graphics.hpp>
 #include <thread>
 #include <random>
@@ -8,6 +9,7 @@
 #include "CmdParser.h"
 
 void updateThread(Turmite *turmite, bool wrap, float delay);
+bool saveScreenshot(sf::RenderWindow &target, std::string fileName);
 bool quit = false;
 
 int main(int argc, const char *argv[])
@@ -22,6 +24,9 @@ int main(int argc, const char *argv[])
     std::string rule;
     std::string color;
 
+    std::string screenshotPath = "";
+    int stepLimit = -1;
+
     // Add arguments to the parser
     CmdParser parser(argc, argv);
     parser.addArgument({"-h", "--help"}, &help, "Display help information", false);
@@ -33,6 +38,9 @@ int main(int argc, const char *argv[])
     parser.addArgument({"-o", "--offset"}, &offset, "Spacing between cells", false, "<offset>");
     parser.addArgument({"-x", "--width"}, &width, "Window width in pixels", false, "<width>");
     parser.addArgument({"-y", "--height"}, &height, "Window height in pixels", false, "<height>");
+
+    parser.addArgument({"-p", "--screenshotpath"}, &screenshotPath, "Screenshot path. Taken on turmite 'death', and causes program to exit. Extension specifies format, must be bmp, png, tga or jpg.", false, "<path>");
+    parser.addArgument({"-t", "--steplimit"}, &stepLimit, "Maximum steps before death", false, "<count>");
 
     // Parse through the arguments
     try {
@@ -102,7 +110,7 @@ int main(int argc, const char *argv[])
     World world(width, height, scale, offset, sfColor);
 
     // Create a single turmite
-    Turmite turmite(&world, rule, world.getRows() / 2, world.getColumns() / 2, 0);
+    Turmite turmite(&world, rule, world.getRows() / 2, world.getColumns() / 2, 0, stepLimit);
 
     // Spawn the thread to update cells each tick
     std::thread thread(&updateThread, &turmite, wrap, delay);
@@ -131,6 +139,14 @@ int main(int argc, const char *argv[])
 
         // End the current frame
         window.display();
+
+        // If screenshotPath exists and dead, save screenshot and quit
+        if(!turmite.isAlive() && screenshotPath != "")
+        {
+            assert(saveScreenshot(window, screenshotPath));
+
+            window.close();
+        }
     }
 
     // Set the quit flag
@@ -162,4 +178,14 @@ void updateThread(Turmite *turmite, bool wrap, float delay)
             lastTime = now;
         }
     }
+}
+
+bool saveScreenshot(sf::RenderWindow &target, std::string fileName)
+{
+    // https://en.sfml-dev.org/forums/index.php?topic=25254.0
+    sf::Texture texture;
+    texture.create(target.getSize().x, target.getSize().y);
+    texture.update(target);
+
+    return texture.copyToImage().saveToFile(fileName);
 }
